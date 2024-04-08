@@ -58,3 +58,30 @@ Route::get('/auth/github/callback', function () {
 
     return redirect('/dashboard');
 })->name('github.callback');
+
+//Open the following URL in your browser to test the GitHub OAuth flow:
+Route::get('/auth/google/redirect', function () {
+    return Socialite::driver('google')->redirect();
+})->name('google.redirect');
+
+//After the user approves the authorization request, they will be redirected back to
+//your application via the callback URL provided to the driver. You will need to define routes to handle the callback:
+Route::get('/auth/google/callback', function () {
+    $googleUser = Socialite::driver('google')->user();
+
+    $user = User::where('google_id', $googleUser->id)->first();
+
+    if (!$user) {
+        $user = User::create([
+            'name' => $googleUser->name,
+            'email' => $googleUser->email,
+            'google_id' => $googleUser->id,
+            'google_token' => $googleUser->token,
+            'google_refresh_token' => $googleUser->refreshToken,
+        ]);
+    }
+
+    Auth::login($user);
+
+    return redirect('/dashboard');
+})->name('google.callback');
